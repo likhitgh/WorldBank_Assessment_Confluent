@@ -1,6 +1,6 @@
 # World Bank Economic Indicators ETL Pipeline
 
-git clone https://github.com/likhitgh/WorldBank_Assessment_Confluent/new/master?filename=README.md
+git clone https://github.com/likhitgh/WorldBank_Assessment_Confluent
 
 ## Overview
 This repository contains an end-to-end Data Engineering pipeline that extracts global economic and financial indicator data from the World Bank API, stages it, transforms it into a structured Data Warehouse, and exposes it via a denormalized reporting layer. 
