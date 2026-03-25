@@ -14,6 +14,7 @@ The pipeline specifically ingests GDP per capita, Inflation, and Unemployment da
 This solution is fully containerized to ensure it can be stood up with minimal friction. To launch the Postgres database and Apache Airflow orchestrator, run:
 
 docker-compose up --build
+
 Once the containers are healthy:
 
 Navigate to http://localhost:8080 in your browser.
