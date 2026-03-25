@@ -1,0 +1,13 @@
+# Python bytecode (the .pyc files you saw)
+**/__pycache__/
+*.pyc
+
+# Environment files (sensitive info)
+.env
+.venv/
+env/
+venv/
+
+# Operating System junk
+.DS_Store
+Thumbs.db

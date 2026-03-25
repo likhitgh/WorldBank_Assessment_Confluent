@@ -1,0 +1,73 @@
+services:
+  # 1. Your Postgres Database
+  postgres_db:
+    image: postgres:14.22-trixie
+    container_name: worldbank_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: worldbank_etl
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d worldbank_etl"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Airflow Initialization
+  airflow-init:
+    image: apache/airflow:2.7.1-python3.10
+    container_name: airflow_init
+    entrypoint: /bin/bash
+    command: -c "airflow db init && airflow users create --username airflow --password airflow --firstname Admin --lastname User --role Admin --email admin@example.com"
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:password123@postgres_db:5432/worldbank_etl
+      - _PIP_ADDITIONAL_REQUIREMENTS=requests psycopg2-binary
+      - AIRFLOW__WEBSERVER__SECRET_KEY=worldbank_assessment_secret_key_123
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  # 3. Airflow Webserver
+  airflow-webserver:
+    image: apache/airflow:2.7.1-python3.10
+    container_name: airflow_webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:password123@postgres_db:5432/worldbank_etl
+      - _PIP_ADDITIONAL_REQUIREMENTS=requests psycopg2-binary
+      - AIRFLOW__WEBSERVER__SECRET_KEY=worldbank_assessment_secret_key_123
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  # 4. Airflow Scheduler
+  airflow-scheduler:
+    image: apache/airflow:2.7.1-python3.10
+    container_name: airflow_scheduler
+    command: scheduler
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:password123@postgres_db:5432/worldbank_etl
+      - _PIP_ADDITIONAL_REQUIREMENTS=requests psycopg2-binary
+      - AIRFLOW__WEBSERVER__SECRET_KEY=worldbank_assessment_secret_key_123
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
